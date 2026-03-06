@@ -1,0 +1,326 @@
+import turtle
+import random
+import math
+
+screen = turtle.Screen()
+screen.setup(800, 600)
+screen.bgcolor("#87CEEB")
+screen.title("Beach Landscape")
+screen.tracer(0)
+
+msg = screen.textinput("Sky Message", "Enter a message:")
+if msg is None:
+    msg = "Hello, beach!"
+
+screen.colormode(255)
+
+pen = turtle.Turtle()
+pen.speed(0)
+pen.hideturtle()
+
+random.seed(42)
+
+shell_pos = [(random.randint(-320,320), random.randint(-320,-220)) for _ in range(10)]
+
+clouds = [(-280,240,1), (50,270,0.8), (260,255,1.2), (-80,260,0.7)]
+
+def rect(x1, y1, x2, y2):
+    pen.up()
+    pen.goto(x1, y1)
+    pen.down()
+    pen.begin_fill()
+    pen.goto(x2, y1)
+    pen.goto(x2, y2)
+    pen.goto(x1, y2)
+    pen.goto(x1, y1)
+    pen.end_fill()
+
+# Sky gradient
+steps = 60
+for i in range(steps):
+    t = i / steps
+    r = 30 + int(160 * t)
+    g = 80 + int(140 * t)
+    b = 180 + int(60 * t)
+    pen.color(r, g, b)
+    y_top = 300 - i * (300 / steps)
+    y_bot = 300 - (i + 1) * (300 / steps)
+    rect(-400, y_bot, 400, y_top)
+
+# Sun
+sx, sy = -290, 170
+for radius, col in [(90, (255,250,180)), (75, (255,240,100)), (60, (255,220,50))]:
+    pen.up()
+    pen.goto(sx, sy - radius)
+    pen.color(*col)
+    pen.begin_fill()
+    pen.circle(radius)
+    pen.end_fill()
+
+pen.up()
+pen.goto(sx, sy - 45)
+pen.color(255, 215, 0)
+pen.begin_fill()
+pen.circle(45)
+pen.end_fill()
+
+pen.color(255, 230, 80)
+pen.pensize(2)
+for angle in range(0, 360, 30):
+    rad = math.radians(angle)
+    x1 = sx + math.cos(rad) * 52
+    y1 = sy + math.sin(rad) * 52
+    x2 = sx + math.cos(rad) * 72
+    y2 = sy + math.sin(rad) * 72
+    pen.up()
+    pen.goto(x1, y1)
+    pen.down()
+    pen.goto(x2, y2)
+
+# Clouds
+def puff(cx, cy, r):
+    pen.up()
+    pen.goto(cx, cy - r)
+    pen.begin_fill()
+    pen.circle(r)
+    pen.end_fill()
+
+for cx, cy, sc in clouds:
+    pen.color(255, 255, 255)
+    for dx, dy, r in [(0,0,22), (28,-5,18), (-28,-5,16), (14,10,14), (-14,10,13)]:
+        puff(cx + dx*sc, cy + dy*sc, r*sc)
+
+# User message
+pen.up()
+pen.goto(0, 220)
+pen.color(255, 255, 255)
+pen.write(msg, align="center", font=("Arial", 20, "bold"))
+
+# Horizon haze
+for i in range(12):
+    t = i / 12
+    pen.color(255, int(180 - 60*t), max(0, int(100 - 80*t)))
+    y = -20 - i * 4
+    rect(-400, y-4, 400, y)
+
+# Sea – one colour
+pen.color(30, 144, 255)
+rect(-400, -200, 400, -20)
+
+# Sand gradient
+for i in range(30):
+    t = i / 30
+    r = int(244 - 30*t)
+    g = int(164 - 20*t)
+    b = int(96 - 20*t)
+    pen.color(r, g, b)
+    y = -190 - i * 5
+    rect(-400, y-5, 400, y)
+
+# Wet sand strip
+pen.color(180, 140, 90)
+rect(-400, -190, 400, -205)
+
+
+def palm(x, y, size=1.0):
+    # Trunk
+    pen.pensize(int(14 * size))
+    pen.color(101, 67, 33)
+    pen.up()
+    pen.goto(x, y)
+    pen.down()
+    pen.setheading(90)
+    pen.forward(96 * size)
+
+    # Trunk rings
+    pen.pensize(1)
+    pen.color(80, 50, 20)
+    for i in range(6):
+        ty = y + 15*size + i * 14*size
+        pen.up()
+        pen.goto(x - 6*size, ty)
+        pen.down()
+        pen.goto(x + 6*size, ty)
+
+    # Fronds – curved leaves radiating from the top
+    frond_x, frond_y = x, y
+    pen.pensize(int(4 * size))
+    pen.color(34, 139, 34)
+    for angle in range(150, 210, 5):   # left side
+        pen.up()
+        pen.goto(frond_x, frond_y)
+        pen.setheading(angle *1.5)
+        pen.down()
+        pen.forward(20 * size)
+        pen.circle(-25 * size, 50)
+    for angle in range(30, 90, 5):      # right side
+        pen.up()
+        pen.goto(frond_x, frond_y)
+        pen.setheading(angle)
+        pen.down()
+        pen.forward(20 * size)
+        pen.circle(-25 * size, 50)
+
+   
+
+def umbrella(x, y, color1, color2):
+    # Pole
+    pen.color(100, 100, 100)
+    pen.pensize(3)
+    pen.up()
+    pen.goto(x, y)
+    pen.down()
+    pen.goto(x, y + 90)
+
+    # Canopy centre point
+    apex_x, apex_y = x, y + 90
+    radius = 60
+
+    # Fill alternating wedges
+    pen.pensize(1)
+    for i in range(8):
+        angle1 = math.radians(i * 180 / 8)
+        angle2 = math.radians((i+1) * 180 / 8)
+        x1 = apex_x + radius * math.cos(angle1)
+        y1 = apex_y + radius * math.sin(angle1)
+        x2 = apex_x + radius * math.cos(angle2)
+        y2 = apex_y + radius * math.sin(angle2)
+        pen.color(*(color1 if i % 2 == 0 else color2))
+        pen.begin_fill()
+        pen.up()
+        pen.goto(apex_x, apex_y)
+        pen.down()
+        pen.goto(x1, y1)
+        pen.goto(x2, y2)
+        pen.goto(apex_x, apex_y)
+        pen.end_fill()
+
+    
+
+    # Knob on top
+    pen.color(200, 200, 200)
+    pen.up()
+    pen.goto(apex_x, apex_y + 5)
+    pen.dot(5)
+
+# Starfish
+def star(x, y, col):
+    pen.color(*col)
+    pen.up()
+    pen.goto(x, y)
+    pen.down()
+    pen.begin_fill()
+    pen.setheading(90)
+    for _ in range(5):
+        pen.forward(14)
+        pen.right(144)
+    pen.end_fill()
+    pen.color(240,120,80)
+    pen.up()
+    pen.goto(x, y)
+    pen.dot(5)
+
+star(-120, -215, (210,90,50))
+star(150, -235, (200,70,70))
+
+# Towels
+def towel(x, y):
+    pen.color(220,50,50)
+    pen.begin_fill()
+    pen.up()
+    pen.goto(x-40, y)
+    pen.down()
+    pen.goto(x+40, y)
+    pen.goto(x+40, y-20)
+    pen.goto(x-40, y-20)
+    pen.goto(x-40, y)
+    pen.end_fill()
+    pen.color(255,255,255)
+    pen.pensize(1)
+    for i in range(3):
+        pen.up()
+        pen.goto(x-40, y-5 - i*6)
+        pen.down()
+        pen.goto(x+40, y-5 - i*6)
+    pen.color(180,30,30)
+    pen.pensize(1)
+    for fx in range(-40, 41, 5):
+        pen.up()
+        pen.goto(x+fx, y-20)
+        pen.down()
+        pen.goto(x+fx, y-26)
+
+towel(-60, -215)
+towel(90, -220)
+
+# Footprints
+pen.color(190,140,80)
+pen.pensize(1)
+sx, sy = 280, -215
+for i in range(6):
+    fx = sx - i*28 + random.randint(-3,3)
+    fy = sy - i*10 + random.randint(-2,2)
+    offset = 10 if i % 2 == 0 else -10
+    pen.up()
+    pen.goto(fx + offset, fy)
+    pen.begin_fill()
+    pen.circle(4, 180)
+    pen.end_fill()
+    pen.up()
+    pen.goto(fx - offset, fy - 5)
+    pen.begin_fill()
+    pen.circle(4, 180)
+    pen.end_fill()
+
+# Shells
+def shell(x, y, t):
+    if t == 0:  # spiral
+        pen.up()
+        pen.goto(x, y)
+        pen.setheading(0)
+        pen.down()
+        pen.color(255,218,185)
+        pen.begin_fill()
+        for i in range(36):
+            pen.forward(i * 0.35)
+            pen.right(40)
+        pen.end_fill()
+        pen.color(210,160,120)
+        pen.up()
+        pen.goto(x+4, y+4)
+        pen.dot(4)
+        pen.color(255,255,255)
+        pen.up()
+        pen.goto(x+2, y+2)
+        pen.dot(2)
+    else:  # clam
+        pen.color(245,200,160)
+        pen.up()
+        pen.goto(x, y-8)
+        pen.down()
+        pen.begin_fill()
+        pen.circle(8, 180)
+        pen.end_fill()
+        pen.color(200,150,110)
+        pen.pensize(1)
+        for i in range(4):
+            pen.up()
+            pen.goto(x, y-8)
+            pen.setheading(20 + i*35)
+            pen.down()
+            pen.forward(8)
+
+for i, (sx, sy) in enumerate(shell_pos):
+    shell(sx, sy, i % 2)
+
+# Place palm trees
+palm(-260, -195, 1.3)
+palm(210, -195, 1.5)
+palm(-370, -210, 0.9)
+
+# Place umbrellas
+umbrella(-60, -215, (220,50,50), (255,215,0))
+umbrella(90, -220, (100,150,255), (255,255,255))
+
+screen.update()
+screen.mainloop()
